@@ -33,4 +33,4 @@ jobs:
       - name: Deploy to dev.to
         run: pnpm dev-to-git
         env:
-          DEV_TO_GIT_TOKEN: ${{ secrets.DEV_TO_GIT_TOKEN }}
+          DEV_TO_GIT_TOKEN: ${{ secrets.DEV_TO_GIT_SECRET }}
