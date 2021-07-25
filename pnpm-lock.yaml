@@ -1,16 +1,28 @@
 lockfileVersion: 5.3
 
 specifiers:
-  dev-to-git: 1.4.1
+  '@beeman/dev-to-git': 1.6.0
   embedme: 1.22.0
   prettier: 2.3.2
 
 dependencies:
-  dev-to-git: 1.4.1
+  '@beeman/dev-to-git': 1.6.0
   embedme: 1.22.0
   prettier: 2.3.2
 
 packages:
+
+  /@beeman/dev-to-git/1.6.0:
+    resolution: {integrity: sha512-1hJUL56UPya7xiSSvhHuToSrjokJf+w5f8W+uBRiA/nLUYdMY1Fj0twzl2vKjsFK5SshJIBXLs5ICZc/aWAvZQ==}
+    engines: {node: '>=6.0.0'}
+    hasBin: true
+    dependencies:
+      chalk: 2.4.2
+      commander: 2.20.3
+      dotenv: 8.0.0
+      front-matter: 3.0.2
+      got: 9.6.0
+    dev: false
 
   /@sindresorhus/is/0.14.0:
     resolution: {integrity: sha512-9NET910DNaIPngYnLLPeg+Ogzqsi9uM4mSboU5y6p8S5DzMTVEsJZrawi+BoDNUVBa2DhJqQYUFvMDfgU062LQ==}
@@ -134,18 +146,6 @@ packages:
 
   /defer-to-connect/1.1.3:
     resolution: {integrity: sha512-0ISdNousHvZT2EiFlZeZAHBUvSxmKswVCEf8hW7KWgG4a8MVEu/3Vb6uWYozkjylyCxe0JBIiRB1jV45S70WVQ==}
-    dev: false
-
-  /dev-to-git/1.4.1:
-    resolution: {integrity: sha512-/SeCsWh+7gJuQXZsOVYIo4B2Tu3rz05+h8uWh99IoV07VdKC4iZWvNkL3xijvqSkfafEcT97i1uRadM8fM0LVQ==}
-    engines: {node: '>=6.0.0'}
-    hasBin: true
-    dependencies:
-      chalk: 2.4.2
-      commander: 2.20.3
-      dotenv: 8.0.0
-      front-matter: 3.0.2
-      got: 9.6.0
     dev: false
 
   /dotenv/8.0.0:
