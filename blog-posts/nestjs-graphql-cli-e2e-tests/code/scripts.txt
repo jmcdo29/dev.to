@@ -1,0 +1,2 @@
+"pretest:e0e": "nest build -p tsconfig.test.json && cp ./test/jest-e2e.json ./dist-test/test/",
+"test:e0e": "jest --config ./dist-test/test/jest-e2e.json"

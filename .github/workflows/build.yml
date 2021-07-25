@@ -1,0 +1,34 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@master
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+
+      - name: Install pnpm
+        run: npm i -g pnpm
+
+      - name: Install Deps
+        run: pnpm i
+
+      - name: Run Prettier
+        run: pnpm prettier:check
+
+      - name: Run Embedme
+        run: pnpm embedme:check
+
+      - name: Deploy to dev.to
+        run: pnpm dev-to-git
+        env:
+          DEV_TO_GIT_TOKEN: ${{ secrets.DEV_TO_GIT_TOKEN }}
