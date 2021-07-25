@@ -1,5 +1,3 @@
-<!-- prettier-ignore-start -->
-
 ---
 
 published: true
@@ -11,8 +9,6 @@ series:
 canonical_url:
 
 ---
-
-<!-- prettier-ignore-end -->
 
 _Jay is a member of the NestJS core team, primarily helping out the community on Discord and Github and contributing to various parts of the framework._
 

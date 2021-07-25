@@ -24,9 +24,6 @@ jobs:
       - name: Install Deps
         run: pnpm i
 
-      - name: Run Prettier
-        run: pnpm prettier:check
-
       - name: Run Embedme
         run: pnpm embedme:check
 
