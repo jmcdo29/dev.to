@@ -43,7 +43,7 @@ Okay, so we've talked about what's different, but let's see how we can actually 
 Let's say we want to create a CLI that takes in a name, and an age and outputs a greeting. Our CLI will have the inputs of `-n personName` and `-a age`. In commander itself, this would look something like
 
 ```ts
-// code/hello.js
+// src/hello.js
 
 const program = new Command();
 program.option('-n <personName>').option('-a <age>');
@@ -64,7 +64,7 @@ This works out well, and it pretty easy to run, but as your program grows it may
 All `nest-commander` commands implement the `CommandRunner` interface, which says that every `@Command()` will have an `async run(inputs: string[], options?: Record<string, any>): Promise<void>` method. `inputs` are values that are passed directly to the command, as defined by the `arguments` property of the `@Command()` decorator. `options` are the options passed for the command that correlate back to each `@Option()` decorator. The above command could be written with `nest-commander` like so
 
 ```ts
-// code/say-hello.command.ts
+// src/say-hello.command.ts
 
 @Command({ name: 'sayHello', options: { isDefault: true } })
 export class SayHelloCommand implements CommandRunner {
@@ -93,7 +93,7 @@ export class SayHelloCommand implements CommandRunner {
 Now all we need to do is add the `SayHelloCommand` to the Nest application and make use of `CommandFactory` in our `main.ts`.
 
 ```ts
-// code/say-hello.module.ts
+// src/say-hello.module.ts
 
 @Module({
   providers: [SayHelloCommand],
@@ -102,7 +102,7 @@ export class SayHelloModule {}
 ```
 
 ```ts
-// code/main.ts
+// src/main.ts
 
 import { CommandFactory } from 'nest-commander';
 import { SayHelloModule } from './say-hello.module';
@@ -122,7 +122,7 @@ Now, this is all fine and dandy, but the real magic, as mentioned before, is tha
 So now what? You've got this fancy CLI application and it runs awesome, but what about when you want to get user input during runtime, not just when starting the application. Well, that's where the `InquirerService` comes in. The first thing that needs to happen is a class with `@QuestionSet()` needs to be created. This will be the class that holds the questions for the named set. The name is important as it will be used in the `InquirerService` later. Say that we want to get the name and age at runtime or at start time, first we need to change the options to optional by changing from chevrons to brackets (i.e. `<personName>` to `[personName]`). Next, we need to create our question set
 
 ```ts
-// code/person.question.ts
+// src/person.question.ts
 
 @QuestionSet({ name: 'personInfo' })
 export class PersonInfoQuestions {
@@ -149,7 +149,7 @@ export class PersonInfoQuestions {
 Now in the `SayHelloCommand` we need to add in the `InquirerService` and ask for the information.
 
 ```ts
-// code/say-hello-with-question.command.ts
+// src/say-hello-with-question.command.ts
 
 @Command({ name: 'sayHello', options: { isDefault: true } })
 export class SayHelloCommand implements CommandRunner {
@@ -171,7 +171,7 @@ export class SayHelloCommand implements CommandRunner {
 The rest of the class follows as above. Now we can pass in the `options` commander already found, and inquirer will skip over asking for them again, allowing for the a great UX by not having to duplicate their information (now if only resume services were so nice). Now in `SayHelloModule` we add in the `PersonInfoQuestions` to the `providers` and everything else just works :tm:
 
 ```ts
-// code/say-hello-with-question.module.ts
+// src/say-hello-with-question.module.ts
 
 @Module({
   providers: [SayHelloCommand, PersonInfoQuestions],

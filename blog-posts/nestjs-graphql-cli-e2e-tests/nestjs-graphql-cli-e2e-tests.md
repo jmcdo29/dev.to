@@ -42,7 +42,7 @@ So we go with option two and write a build process for e2e tests.
 The first thing that we will need now is a new `tsconfig`, so that we can get the build to include both our source code and our test code. So, taking the standard setup from a `nest new` project, we can make a `tsconfig.test.json` that looks like this
 
 ```js
-// code/tsconfig.test.json
+// src/tsconfig.test.json
 
 {
   "extends": "./tsconfig.json",
@@ -61,7 +61,7 @@ This will test `nest build` to include both the `src` directory and the `test` d
 Now we need to update our `jest-e2e.json` that Nest provides for us. We need to remove the `transform` property, and change the regex used for finding the tests. The new `jest-e2e.json` should look something like this:
 
 ```js
-// code/jest-e2e.json
+// src/jest-e2e.json
 
 {
   "moduleFileExtensions": ["js", "json", "ts"],
@@ -75,7 +75,7 @@ Now we need to update our `jest-e2e.json` that Nest provides for us. We need to 
 Now the last thing to do is to create a build script and a test script to build the entire source code with tests and move them all to a single directory for tests. We can make use of `pre` scripts here and make two new scripts in the `package.json` that look like this
 
 ```js
-// code/scripts.txt
+// src/scripts.txt
 
 "pretest:e0e": "nest build -p tsconfig.test.json && cp ./test/jest-e2e.json ./dist-test/test/",
 "test:e0e": "jest --config ./dist-test/test/jest-e2e.json"

@@ -27,7 +27,7 @@ jobs:
       - name: Run Embedme
         run: pnpm embedme:check
 
-      - name: Deploy to dev.to
-        run: pnpm dev-to-git
-        env:
-          DEV_TO_GIT_TOKEN: ${{ secrets.DEV_TO_GIT_SECRET }}
+      # - name: Deploy to dev.to
+      #   run: pnpm dev-to-git
+      #   env:
+      #     DEV_TO_GIT_TOKEN: ${{ secrets.DEV_TO_GIT_SECRET }}
