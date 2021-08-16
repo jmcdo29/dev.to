@@ -6,5 +6,9 @@
   {
     "id": 659311,
     "relativePathToArticle": "./blog-posts/nest-commander/nest-commander.md"
+  },
+  {
+    "id": 772720,
+    "relativePathToArticle": "./blog-posts/nestjs-providing-providers-to-dynamic-modules"
   }
 ]
