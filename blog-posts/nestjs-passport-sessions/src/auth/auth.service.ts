@@ -12,6 +12,7 @@ export class AuthService {
       firstName: 'Joe',
       lastName: 'Foo',
       email: 'joefoo@test.com',
+      // Passw0rd!
       password: '$2b$12$s50omJrK/N3yCM6ynZYmNeen9WERDIVTncywePc75.Ul8.9PUk0LK',
     },
     {
@@ -19,6 +20,7 @@ export class AuthService {
       firstName: 'Jen',
       lastName: 'Bar',
       email: 'jenbar@test.com',
+      // P4ssword!
       password: '$2b$12$FHUV7sHexgNoBbP8HsD4Su/CeiWbuX/JCo8l2nlY1yCo2LcR3SjmC',
     },
   ];
