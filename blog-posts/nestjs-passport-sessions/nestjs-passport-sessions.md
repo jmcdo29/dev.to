@@ -211,6 +211,19 @@ You can either install and run redis locally on your machine, or you can use a `
 
 ```yml
 # docker-compose.yml
+
+version: '3'
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - '6379:6379'
+  rcli:
+    image: redis:latest
+    links:
+      - redis
+    command: redis-cli -h redis
+
 ```
 
 And then to run redis, I just used `docker compose up redis -d`. When I needed to run the redis CLI, I used `docker compose run rcli` to connect to the redis instance via the docker network.
@@ -221,16 +234,76 @@ Now on to the middleware we're going to be using: for setting up sessions and a 
 
 ```ts
 // src/redis/redis.module.ts
+
+import { Module } from '@nestjs/common';
+import * as Redis from 'redis';
+
+import { REDIS } from './redis.constants';
+
+@Module({
+  providers: [
+    {
+      provide: REDIS,
+      useValue: Redis.createClient({ port: 6379, host: 'localhost' }),
+    },
+  ],
+  exports: [REDIS],
+})
+export class RedisModule {}
+
 ```
 
 ```ts
 // src/redis/redis.constants.ts
+
+export const REDIS = Symbol('AUTH:REDIS');
+
 ```
 
 which allows for us to use `@Inject(REDIS)` to inject the redis client. Now we can configure our middleware like so:
 
 ```ts
 // src/app.module.ts
+
+import { Inject, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import * as RedisStore from 'connect-redis';
+import * as session from 'express-session';
+import { session as passportSession, initialize as passportInitialize } from 'passport';
+import { RedisClient } from 'redis';
+
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { AuthModule } from './auth';
+import { REDIS, RedisModule } from './redis';
+
+@Module({
+  imports: [AuthModule, RedisModule],
+  providers: [AppService],
+  controllers: [AppController],
+})
+export class AppModule implements NestModule {
+  constructor(@Inject(REDIS) private readonly redis: RedisClient) {}
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(
+        session({
+          store: new (RedisStore(session))({ client: this.redis, logErrors: true }),
+          saveUninitialized: false,
+          secret: 'sup3rs3cr3t',
+          resave: false,
+          cookie: {
+            sameSite: true,
+            httpOnly: false,
+            maxAge: 60000,
+          },
+        }),
+        passportInitialize(),
+        passportSession(),
+      )
+      .forRoutes('*');
+  }
+}
+
 ```
 
 and have passport ready to use sessions. There's two important things to note here:
@@ -246,48 +319,225 @@ To start off, let's define our `User` as the following
 
 ```ts
 // src/auth/models/user.interface.ts
+
+export interface User {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+}
+
 ```
 
 And then have `RegisterUserDto` and `LoginUserDto` as
 
 ```ts
 // src/auth/models/register-user.dto.ts
+
+export class RegisterUserDto {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  confirmationPassword: string;
+}
+
 ```
 
 and
 
 ```ts
 // src/auth/models/login-user.dto.ts
+
+export class LoginUserDto {
+  email: string;
+  password: string;
+}
+
 ```
 
 Now we'll set up our `LocalStrategy` as
 
 ```ts
 // src/auth/local.strategy.ts
+
+import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { Strategy } from 'passport-local';
+import { AuthService } from './auth.service';
+
+@Injectable()
+export class LocalStrategy extends PassportStrategy(Strategy) {
+  constructor(private readonly authService: AuthService) {
+    super({
+      usernameField: 'email',
+    });
+  }
+
+  async validate(email: string, password: string) {
+    console.log('Validating in LocalStrategy');
+    return this.authService.validateUser({ email, password });
+  }
+}
+
 ```
 
 Notice here we're passing `usernameField: 'email'` to `super`. This is because in our `RegisterUserDto` and `LoginUserDto` we're using the `email` field and not `username` which is passport's default. You can change the `passwordField` too, but I had no reason to do that for this article. Now we'll make our `AuthService`,
 
 ```ts
 // src/auth/auth.service.ts
+
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { compare, hash } from 'bcrypt';
+
+import { LoginUserDto, RegisterUserDto } from './models';
+import { User } from './models/user.interface';
+
+@Injectable()
+export class AuthService {
+  private users: User[] = [
+    {
+      id: 1,
+      firstName: 'Joe',
+      lastName: 'Foo',
+      email: 'joefoo@test.com',
+      // Passw0rd!
+      password: '$2b$12$s50omJrK/N3yCM6ynZYmNeen9WERDIVTncywePc75.Ul8.9PUk0LK',
+    },
+    {
+      id: 2,
+      firstName: 'Jen',
+      lastName: 'Bar',
+      email: 'jenbar@test.com',
+      // P4ssword!
+      password: '$2b$12$FHUV7sHexgNoBbP8HsD4Su/CeiWbuX/JCo8l2nlY1yCo2LcR3SjmC',
+    },
+  ];
+
+  async validateUser(user: LoginUserDto) {
+    const foundUser = this.users.find(u => u.email === user.email);
+    if (!user || !(await compare(user.password, foundUser.password))) {
+      throw new UnauthorizedException('Incorrect username or password');
+    }
+    const { password: _password, ...retUser } = foundUser;
+    return retUser;
+  }
+
+  async registerUser(user: RegisterUserDto): Promise<Omit<User, 'password'>> {
+    const existingUser = this.users.find(u => u.email === user.email);
+    if (existingUser) {
+      throw new BadRequestException('User remail must be unique');
+    }
+    if (user.password !== user.confirmationPassword) {
+      throw new BadRequestException('Password and Confirmation Password must match');
+    }
+    const { confirmationPassword: _, ...newUser } = user;
+    this.users.push({
+      ...newUser,
+      password: await hash(user.password, 12),
+      id: this.users.length + 1,
+    });
+    return {
+      id: this.users.length + 1,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+    };
+  }
+
+  findById(id: number): Omit<User, 'password'> {
+    const { password: _, ...user } = this.users.find(u => u.id === id);
+    if (!user) {
+      throw new BadRequestException(`No user found with id ${id}`);
+    }
+    return user;
+  }
+}
+
 ```
 
 our controller
 
 ```ts
 // src/auth/auth.controller.ts
+
+import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+
+import { LocalGuard } from '../local.guard';
+import { AuthService } from './auth.service';
+import { LoginUserDto, RegisterUserDto } from './models';
+
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Post('register')
+  registerUser(@Body() user: RegisterUserDto) {
+    return this.authService.registerUser(user);
+  }
+
+  @UseGuards(LocalGuard)
+  @Post('login')
+  loginUser(@Req() req, @Body() user: LoginUserDto) {
+    return req.session;
+  }
+}
+
 ```
 
 and our serializer
 
 ```ts
-// src/serialization.provider.ts
+// src/auth/serialization.provider.ts
+
+import { Injectable } from '@nestjs/common';
+import { PassportSerializer } from '@nestjs/passport';
+
+import { AuthService } from './auth.service';
+import { User } from './models/user.interface';
+
+@Injectable()
+export class AuthSerializer extends PassportSerializer {
+  constructor(private readonly authService: AuthService) {
+    super();
+  }
+  serializeUser(user: User, done: (err: Error, id: number) => void) {
+    done(null, user.id);
+  }
+
+  deserializeUser(payload: number, done: (err: Error, user: Omit<User, 'password'>) => void) {
+    const user = this.authService.findById(payload);
+    done(null, user);
+  }
+}
+
 ```
 
 along with our module
 
 ```ts
 // src/auth/auth.module.ts
+
+import { Module } from '@nestjs/common';
+import { PassportModule } from '@nestjs/passport';
+
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { LocalStrategy } from './local.strategy';
+import { AuthSerializer } from './serialization.provider';
+
+@Module({
+  imports: [
+    PassportModule.register({
+      session: true,
+    }),
+  ],
+  providers: [AuthService, LocalStrategy, AuthSerializer],
+  controllers: [AuthController],
+})
+export class AuthModule {}
+
 ```
 
 All we need to do for the `AuthSerializer` is to add it to the `providers` array. Nest will instantiate it, which will end up calling `passport.serializeUser` and `passport.deserializeUser` for us (told you going over that would be useful).
@@ -298,12 +548,36 @@ So now let's get to our guards, as you'll notice up in the `AuthController` we'r
 
 ```ts
 // src/local.guard.ts
+
+import { ExecutionContext, Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
+@Injectable()
+export class LocalGuard extends AuthGuard('local') {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const result = (await super.canActivate(context)) as boolean;
+    await super.logIn(context.switchToHttp().getRequest());
+    return result;
+  }
+}
+
 ```
 
 We have another guard as well, the `LoggedInGuard`. This guards ends up just calling `request.isAuthenticated()` which is a method that passport ends up adding to the request object when sessions are in use. We can use this instead of having to have the user pass us the username and password every request, because there will be a cookie with the user's session id on it.
 
 ```ts
 // src/logged-in.guard.ts
+
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+
+
+@Injectable()
+export class LoggedInGuard implements CanActivate {
+  canActivate(context: ExecutionContext) {
+    return context.switchToHttp().getRequest().isAuthenticated();
+  }
+}
+
 ```
 
 ## A couple of extra classes
@@ -312,14 +586,63 @@ There's a few other classes that I'm making use of. It'll be easiest to view the
 
 ```ts
 // src/app.controller.ts
+
+import { Controller, Get, UseGuards } from '@nestjs/common';
+
+import { AppService } from './app.service';
+import { LoggedInGuard } from './logged-in.guard';
+
+@Controller()
+export class AppController {
+  constructor(private readonly appService: AppService) {}
+
+  @Get()
+  publicRoute() {
+    return this.appService.getPublicMessage();
+  }
+
+  @UseGuards(LoggedInGuard)
+  @Get('/protected')
+  guardedRoute() {
+    return this.appService.getPrivateMessage();
+  }
+}
+
 ```
 
 ```ts
 // src/app.service.ts
+
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class AppService {
+  getPublicMessage(): string {
+    return 'This message is public to all!';
+  }
+
+  getPrivateMessage(): string {
+    return 'You can only see this if you are authenticated';
+  }
+}
+
 ```
 
 ```ts
 // src/main.ts
+
+import { NestFactory } from '@nestjs/core';
+
+import { AppModule } from './app.module';
+
+const bootstrap = async () => {
+  const app = await NestFactory.create(AppModule);
+  await app.listen(3000);
+  console.log(`Application listening at ${await app.getUrl()}`);
+};
+
+bootstrap();
+
 ```
 
 ## Testing out the flow
