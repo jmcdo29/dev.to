@@ -9,6 +9,10 @@
   },
   {
     "id": 772720,
-    "relativePathToArticle": "./blog-posts/nestjs-providing-providers-to-dynamic-modules"
+    "relativePathToArticle": "./blog-posts/nestjs-providing-providers-to-dynamic-modules/nestjs-providing-providers-to-dynamic-modules.md"
+  },
+  {
+    "id": 796777,
+    "relativePathToArticle": "./blog-posts/nestjs-passport-sessions/nestjs-passport-sessions.md"
   }
 ]

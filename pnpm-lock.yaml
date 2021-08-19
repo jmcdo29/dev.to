@@ -24,7 +24,7 @@ specifiers:
   class-transformer: ^0.4.0
   class-validator: ^0.13.1
   connect-redis: ^6.0.0
-  dev-to-git: 1.4.1
+  dev-to-git: 1.4.8
   embedme: 1.22.0
   express-session: ^1.17.2
   graphql: ^15.5.1
@@ -41,7 +41,7 @@ specifiers:
   typescript: ^4.3.5
 
 dependencies:
-  dev-to-git: 1.4.1
+  dev-to-git: 1.4.8
   embedme: 1.22.0
   prettier: 2.3.2
 
@@ -1859,8 +1859,8 @@ packages:
     hasBin: true
     dev: true
 
-  /dev-to-git/1.4.1:
-    resolution: {integrity: sha512-/SeCsWh+7gJuQXZsOVYIo4B2Tu3rz05+h8uWh99IoV07VdKC4iZWvNkL3xijvqSkfafEcT97i1uRadM8fM0LVQ==}
+  /dev-to-git/1.4.8:
+    resolution: {integrity: sha512-ss9+mA4FwmWKi/zCD2DhvhgLUxjCl7mydPqqXcgHFkNfnL1POfF1eWaVNiuvRIaSAi7yXOEPWuT6VqfTgkyNjA==}
     engines: {node: '>=6.0.0'}
     hasBin: true
     dependencies:

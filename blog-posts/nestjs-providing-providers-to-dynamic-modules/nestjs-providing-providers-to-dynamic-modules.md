@@ -1,6 +1,6 @@
 ---
 title: Providing Providers to Dynamic NestJS Modules
-published: false
+published: true
 ---
 
 _Jay is a member of the NestJS core team, primarily helping out the community on Discord and Github and contributing to various parts of the framework._
