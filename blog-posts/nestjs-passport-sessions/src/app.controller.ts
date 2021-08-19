@@ -1,4 +1,5 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
+import { AdminGuard } from './admin.guard';
 
 import { AppService } from './app.service';
 import { LoggedInGuard } from './logged-in.guard';
@@ -13,8 +14,14 @@ export class AppController {
   }
 
   @UseGuards(LoggedInGuard)
-  @Get('/protected')
+  @Get('protected')
   guardedRoute() {
     return this.appService.getPrivateMessage();
+  }
+
+  @UseGuards(AdminGuard)
+  @Get('admin')
+  getAdminMessage() {
+    return this.appService.getAdminMessage();
   }
 }

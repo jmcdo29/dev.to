@@ -1,4 +1,4 @@
-import { Inject, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { Inject, Logger, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import * as RedisStore from 'connect-redis';
 import * as session from 'express-session';
 import { session as passportSession, initialize as passportInitialize } from 'passport';
@@ -11,7 +11,7 @@ import { REDIS, RedisModule } from './redis';
 
 @Module({
   imports: [AuthModule, RedisModule],
-  providers: [AppService],
+  providers: [AppService, Logger],
   controllers: [AppController],
 })
 export class AppModule implements NestModule {

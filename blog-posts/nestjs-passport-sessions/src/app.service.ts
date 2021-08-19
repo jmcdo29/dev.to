@@ -9,4 +9,8 @@ export class AppService {
   getPrivateMessage(): string {
     return 'You can only see this if you are authenticated';
   }
+
+  getAdminMessage(): string {
+    return 'You can only see this if you are an admin';
+  }
 }
