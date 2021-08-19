@@ -4,4 +4,5 @@ export class RegisterUserDto {
   email: string;
   password: string;
   confirmationPassword: string;
+  role = 'user';
 }

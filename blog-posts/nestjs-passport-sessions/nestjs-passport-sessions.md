@@ -265,7 +265,7 @@ which allows for us to use `@Inject(REDIS)` to inject the redis client. Now we c
 ```ts
 // src/app.module.ts
 
-import { Inject, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { Inject, Logger, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import * as RedisStore from 'connect-redis';
 import * as session from 'express-session';
 import { session as passportSession, initialize as passportInitialize } from 'passport';
@@ -278,7 +278,7 @@ import { REDIS, RedisModule } from './redis';
 
 @Module({
   imports: [AuthModule, RedisModule],
-  providers: [AppService],
+  providers: [AppService, Logger],
   controllers: [AppController],
 })
 export class AppModule implements NestModule {
@@ -326,6 +326,7 @@ export interface User {
   lastName: string;
   email: string;
   password: string;
+  role: string;
 }
 
 ```
@@ -341,6 +342,7 @@ export class RegisterUserDto {
   email: string;
   password: string;
   confirmationPassword: string;
+  role = 'user';
 }
 
 ```
@@ -376,7 +378,6 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(email: string, password: string) {
-    console.log('Validating in LocalStrategy');
     return this.authService.validateUser({ email, password });
   }
 }
@@ -404,6 +405,7 @@ export class AuthService {
       email: 'joefoo@test.com',
       // Passw0rd!
       password: '$2b$12$s50omJrK/N3yCM6ynZYmNeen9WERDIVTncywePc75.Ul8.9PUk0LK',
+      role: 'admin',
     },
     {
       id: 2,
@@ -412,6 +414,7 @@ export class AuthService {
       email: 'jenbar@test.com',
       // P4ssword!
       password: '$2b$12$FHUV7sHexgNoBbP8HsD4Su/CeiWbuX/JCo8l2nlY1yCo2LcR3SjmC',
+      role: 'user',
     },
   ];
 
@@ -439,10 +442,11 @@ export class AuthService {
       id: this.users.length + 1,
     });
     return {
-      id: this.users.length + 1,
+      id: this.users.length,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
+      role: user.role,
     };
   }
 
@@ -502,12 +506,12 @@ export class AuthSerializer extends PassportSerializer {
   constructor(private readonly authService: AuthService) {
     super();
   }
-  serializeUser(user: User, done: (err: Error, id: number) => void) {
-    done(null, user.id);
+  serializeUser(user: User, done: (err: Error, user: { id: number; role: string }) => void) {
+    done(null, { id: user.id, role: user.role });
   }
 
-  deserializeUser(payload: number, done: (err: Error, user: Omit<User, 'password'>) => void) {
-    const user = this.authService.findById(payload);
+  deserializeUser(payload: { id: number; role: string }, done: (err: Error, user: Omit<User, 'password'>) => void) {
+    const user = this.authService.findById(payload.id);
     done(null, user);
   }
 }
@@ -580,6 +584,27 @@ export class LoggedInGuard implements CanActivate {
 
 ```
 
+And now we have one other guard for checking if a user is an admin or not.
+
+```ts
+// src/admin.guard.ts
+
+import { ExecutionContext, Injectable } from '@nestjs/common';
+
+import { LoggedInGuard } from './logged-in.guard';
+
+@Injectable()
+export class AdminGuard extends LoggedInGuard {
+  canActivate(context: ExecutionContext): boolean {
+    const req = context.switchToHttp().getRequest();
+    return super.canActivate(context) && req.session.passport.user.role === 'admin';
+  }
+}
+
+```
+
+This guard extends our usual `LoggedInGuard` and checks for the user's role, which is saved in the redis session, via the `AuthSerializer` we created earlier.
+
 ## A couple of extra classes
 
 There's a few other classes that I'm making use of. It'll be easiest to view them in the GitHub repo, but I'll add them here if you just want to copy paste:
@@ -588,6 +613,7 @@ There's a few other classes that I'm making use of. It'll be easiest to view the
 // src/app.controller.ts
 
 import { Controller, Get, UseGuards } from '@nestjs/common';
+import { AdminGuard } from './admin.guard';
 
 import { AppService } from './app.service';
 import { LoggedInGuard } from './logged-in.guard';
@@ -602,9 +628,15 @@ export class AppController {
   }
 
   @UseGuards(LoggedInGuard)
-  @Get('/protected')
+  @Get('protected')
   guardedRoute() {
     return this.appService.getPrivateMessage();
+  }
+
+  @UseGuards(AdminGuard)
+  @Get('admin')
+  getAdminMessage() {
+    return this.appService.getAdminMessage();
   }
 }
 
@@ -624,6 +656,10 @@ export class AppService {
   getPrivateMessage(): string {
     return 'You can only see this if you are authenticated';
   }
+
+  getAdminMessage(): string {
+    return 'You can only see this if you are an admin';
+  }
 }
 
 ```
@@ -631,14 +667,16 @@ export class AppService {
 ```ts
 // src/main.ts
 
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module';
 
 const bootstrap = async () => {
   const app = await NestFactory.create(AppModule);
+  const logger = app.get(Logger);
   await app.listen(3000);
-  console.log(`Application listening at ${await app.getUrl()}`);
+  logger.log(`Application listening at ${await app.getUrl()}`);
 };
 
 bootstrap();

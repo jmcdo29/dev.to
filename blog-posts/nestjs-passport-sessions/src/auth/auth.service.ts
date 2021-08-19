@@ -14,6 +14,7 @@ export class AuthService {
       email: 'joefoo@test.com',
       // Passw0rd!
       password: '$2b$12$s50omJrK/N3yCM6ynZYmNeen9WERDIVTncywePc75.Ul8.9PUk0LK',
+      role: 'admin',
     },
     {
       id: 2,
@@ -22,6 +23,7 @@ export class AuthService {
       email: 'jenbar@test.com',
       // P4ssword!
       password: '$2b$12$FHUV7sHexgNoBbP8HsD4Su/CeiWbuX/JCo8l2nlY1yCo2LcR3SjmC',
+      role: 'user',
     },
   ];
 
@@ -49,10 +51,11 @@ export class AuthService {
       id: this.users.length + 1,
     });
     return {
-      id: this.users.length + 1,
+      id: this.users.length,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
+      role: user.role,
     };
   }
 
