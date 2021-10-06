@@ -19,11 +19,11 @@ I migrated from using a [pnpm workspace](https://pnpm.io/workspaces) to using Nx
 
 Now, with my pnpm workspace, every package was built in a `dist` directory right next to the `src` so I'd have `packages/<package>/src` and `packages/<package>/dist` and I could easily keep a `package.json` per package and have it deploy from right there. With Nx, that's not really the case anymore. There's a root `package.json` that holds all of the dependencies and _most_ of the time, the `outDir` is set to be `<workspaceRoot>/dist/<package>/src`. Kind of makes deploying from a central location just a bit harder.
 
-For the `build` command wth packages, I'm actually using the [`@nrwl/node:package`](https://nx.dev/l/n/node/package) executor, which runs a build command via `tsc` and copies over the `package.json` (if you have one), and sets it up with the proper path for publishing, and copies the package's `README` and `CHANGELOG` if they exist. You can set the `outputPath` to anything you want, but I've found that `dist/<package>` works really well for this automation setup. You could actually do `packages/<package>`, but then your `ts` and your `js` will get mixed with each other, which I find very messy and confusing.
+For the `build` command with Nx, I'm actually using the [`@nrwl/node:package`](https://nx.dev/l/n/node/package) executor, which runs a build command via `tsc` and copies over the `package.json` (if you have one), and sets it up with the proper path for publishing, and copies the package's `README` and `CHANGELOG` if they exist. If you don't have a `package.json` for the library, Nx will create one for you and populate it with the `dependencies` it finds in the compiled code. You can set the `outputPath` to anything you want, but I've found that `dist/<package>` works really well for this automation setup. You could actually do `packages/<package>`, but then your `ts` and your `js` will get mixed with each other, which I find very messy and confusing.
 
 So now why is having these packages in the `dist/` directory a problem? Well, because `changesets` works by reading the workspace's configuration, and as we want to have our source code version tracked, but not the compiled code, we don't normally include the `dist` in our git repository. Because of this, when we do things like `pnpm changeset` to create a new changeset, we'll eventually be modifying the `package.json` in the `packages/<package>/` directory.
 
-The changeset action that I mentioned earlier works like this:
+The changeset action that I mentioned earlier works like this during your CI workflow:
 
 1. check if there's one or more changeset file(s)
    1. if yes, open a PR with the updates to the appropriate `package.json`s (in the `packages/<package>` directories)
@@ -37,14 +37,16 @@ So a typical workflow would look something like
 1. git pull
 2. git checkout -b <feature-branch>
 3. make changes
-4. pnpm changeset
-5. git add .
-6. git commit
-7. git push origin <feature-branch>
-8. merge PR
-9. let the changeset action make a new version PR
-10. review and merge
-11. let changeset publish
+4. commit changes as often as you normally would
+5. pnpm changeset
+6. follow the changeset wizard and set up the changes to be made
+7. git add .
+8. git commit
+9. git push origin <feature-branch>
+10. merge PR
+11. let the changeset action make a new version PR
+12. review and merge
+13. let changeset publish
 
 The final problem occurs in this "let changeset publish" step, and the solution is coming up.
 
