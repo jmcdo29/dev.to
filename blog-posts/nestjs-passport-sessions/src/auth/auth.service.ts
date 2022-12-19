@@ -6,6 +6,8 @@ import { User } from './models/user.interface';
 
 @Injectable()
 export class AuthService {
+  /* In an ideal application you would want to use data from an actual database,
+  We used an array of users here for the simplicity of this tutorial */
   private users: User[] = [
     {
       id: 1,
@@ -27,6 +29,7 @@ export class AuthService {
     },
   ];
 
+  /* This method validates a users credentials and returns the user object */
   async validateUser(user: LoginUserDto) {
     const foundUser = this.users.find(u => u.email === user.email);
     if (!user || !(await compare(user.password, foundUser.password))) {
@@ -35,11 +38,12 @@ export class AuthService {
     const { password: _password, ...retUser } = foundUser;
     return retUser;
   }
-
+  /* Ideally you would want to store your users in a database.
+  We also return the user object but without the password or confirmationPassword */
   async registerUser(user: RegisterUserDto): Promise<Omit<User, 'password'>> {
     const existingUser = this.users.find(u => u.email === user.email);
     if (existingUser) {
-      throw new BadRequestException('User remail must be unique');
+      throw new BadRequestException('User email must be unique');
     }
     if (user.password !== user.confirmationPassword) {
       throw new BadRequestException('Password and Confirmation Password must match');
@@ -58,7 +62,7 @@ export class AuthService {
       role: user.role,
     };
   }
-
+  
   findById(id: number): Omit<User, 'password'> {
     const { password: _, ...user } = this.users.find(u => u.id === id);
     if (!user) {

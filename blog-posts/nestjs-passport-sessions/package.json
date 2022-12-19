@@ -1,0 +1,60 @@
+{
+    "name": "dev.to",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/YOUR-USERNAME/YOUR-REPO.git"
+    },
+    "scripts": {
+      "prettier": "prettier",
+      "embedme": "embedme blog-posts/**/*.md",
+      "prettier:base": "yarn run prettier \"**/*.{js,json,scss,md,ts,html,component.html}\"",
+      "prettier:write": "yarn run prettier:base --write",
+      "prettier:check": "yarn run prettier:base --list-different",
+      "embedme:check": "yarn run embedme --verify",
+      "embedme:write": "yarn run embedme",
+      "dev-to-git": "dev-to-git"
+    },
+    "dependencies": {
+      "dev-to-git": "1.4.8",
+      "embedme": "1.22.0",
+      "prettier": "2.3.2"
+    },
+    "devDependencies": {
+      "@golevelup/nestjs-modules": "^0.4.2",
+      "@nestjs/cli": "^8.1.1",
+      "@nestjs/common": "^8.0.6",
+      "@nestjs/config": "^1.0.1",
+      "@nestjs/core": "^8.0.6",
+      "@nestjs/graphql": "^8.0.2",
+      "@nestjs/mapped-types": "^1.0.0",
+      "@nestjs/passport": "^8.0.1",
+      "@nestjs/platform-express": "^8.0.6",
+      "@nestjs/schematics": "^8.0.2",
+      "@nestjs/testing": "^8.0.6",
+      "@types/bcrypt": "^5.0.0",
+      "@types/connect-redis": "^0.0.17",
+      "@types/express-session": "^1.17.4",
+      "@types/jsonwebtoken": "^8.5.4",
+      "@types/passport-local": "^1.0.34",
+      "@types/redis": "^2.8.31",
+      "apollo-server-core": "^2.25.2",
+      "apollo-server-express": "^2.25.2",
+      "bcrypt": "^5.0.1",
+      "class-transformer": "^0.4.0",
+      "class-validator": "^0.13.1",
+      "connect-redis": "^6.0.0",
+      "express-session": "^1.17.2",
+      "graphql": "^15.5.1",
+      "graphql-tools": "^8.1.0",
+      "jsonwebtoken": "^8.5.1",
+      "nest-commander": "^2.0.0",
+      "nest-commander-testing": "^2.0.0",
+      "passport": "^0.4.1",
+      "passport-local": "^1.0.0",
+      "redis": "^3.1.2",
+      "reflect-metadata": "^0.1.13",
+      "rxjs": "^7.3.0",
+      "typescript": "^4.3.5"
+    }
+  }
+  
