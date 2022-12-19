@@ -1,4 +1,7 @@
 import { Inject, Logger, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+// NOTE: USE VERSION 3.1.2 OF THE REDIS PACKAGE
+// E.g; yarn add redis@3.1.2
+
 import * as RedisStore from 'connect-redis';
 import * as session from 'express-session';
 import { session as passportSession, initialize as passportInitialize } from 'passport';
